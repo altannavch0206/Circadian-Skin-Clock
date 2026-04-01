@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circadian Skin Clock · Altannavch</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #f5f0e8;
+  --bg2:      #ede7db;
+  --bg3:      #e4ddd0;
+  --ink:      #1e1c18;
+  --ink2:     #4a4640;
+  --ink3:     #8a847a;
+  --ink4:     #b0aa9f;
+  --sage:     #4a6355;
+  --sage-lt:  #dce8e2;
+  --rose:     #8c3d3d;
+  --rose-lt:  #f0dede;
+  --gold:     #7a5c2a;
+  --gold-lt:  #f0e6d0;
+  --border:   rgba(30,28,24,0.1);
+  --border2:  rgba(30,28,24,0.18);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* subtle paper grain */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+.page { max-width: 680px; margin: 0 auto; padding: 4rem 1.5rem 5rem; }
+
+/* hero */
+.hero { margin-bottom: 3.5rem; }
+.hero-meta {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ink3); margin-bottom: 1.5rem; font-weight: 400;
+}
+.hero-meta::before {
+  content: '';
+  display: block; width: 28px; height: 1px;
+  background: var(--ink3);
+}
+.hero h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(38px, 7vw, 62px);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  color: var(--ink);
+  margin-bottom: 1.25rem;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--sage);
+}
+.hero-sub {
+  font-size: 14px; color: var(--ink2);
+  line-height: 1.8; max-width: 480px;
+  font-weight: 300;
+}
+
+/* decorative circle */
+.deco-ring {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
+  margin: 2rem 0;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.deco-ring::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+.ring-hand {
+  position: absolute;
+  width: 1.5px; height: 24px;
+  background: var(--sage);
+  border-radius: 2px;
+  bottom: 50%; left: 50%;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  transition: transform 1s cubic-bezier(.4,0,.2,1);
+}
+.ring-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--rose);
+  position: relative; z-index: 2;
+}
+
+/* section label */
+.sec-label {
+  font-size: 10px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--ink3);
+  margin-bottom: 1rem; font-weight: 500;
+}
+
+/* card */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+
+/* form */
+.form-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.form-row label { font-size: 13px; color: var(--ink2); min-width: 150px; flex-shrink: 0; font-weight: 300; }
+.form-row input[type=time],
+.form-row select {
+  flex: 1;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; font-weight: 300;
+  padding: 8px 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  background: var(--bg);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none; -webkit-appearance: none;
+}
+.form-row input[type=time]:focus,
+.form-row select:focus { border-color: var(--sage); }
+
+.check-lbl { font-size: 12px; color: var(--ink3); margin-bottom: 10px; font-weight: 300; letter-spacing: 0.3px; }
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.check-item {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 12px; color: var(--ink2); font-weight: 300;
+  cursor: pointer; padding: 8px 10px;
+  border-radius: 3px; border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.check-item:hover { background: var(--bg3); border-color: var(--border); }
+.check-item input { display: none; }
+.cbox {
+  width: 14px; height: 14px; border-radius: 2px;
+  border: 1px solid var(--border2); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.check-item.checked .cbox { background: var(--sage-lt); border-color: var(--sage); }
+.check-item.checked .cbox::after { content: ''; width: 6px; height: 6px; border-radius: 1px; background: var(--sage); display: block; }
+.check-item.checked { color: var(--ink); }
+
+.btn {
+  width: 100%; margin-top: 8px;
+  padding: 13px; cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px; font-weight: 400; letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 3px;
+  border: 1px solid var(--sage);
+  background: transparent; color: var(--sage);
+  transition: all 0.2s;
+}
+.btn:hover { background: var(--sage); color: var(--bg); }
+.btn:active { transform: scale(0.99); }
+
+/* results */
+.results { display: none; }
+.results.visible { display: block; animation: fadeUp 0.5s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.divider {
+  display: flex; align-items: center; gap: 14px;
+  margin: 2rem 0 1.25rem;
+  font-size: 10px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--ink4);
+}
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.score-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem; }
+.score-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 1rem; text-align: center; }
+.score-lbl { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; font-weight: 400; }
+.score-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 300; line-height: 1; color: var(--ink);
+}
+.score-num.good { color: var(--sage); }
+.score-num.mid  { color: var(--gold); }
+.score-num.low  { color: var(--rose); }
+.score-unit { font-size: 11px; color: var(--ink4); margin-top: 3px; font-weight: 300; }
+
+/* timeline */
+.tl-row { margin-bottom: 18px; }
+.tl-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.tl-name { font-size: 12px; color: var(--ink2); font-weight: 300; }
+.tl-time { font-size: 12px; font-weight: 400; color: var(--ink); }
+.tl-bar { height: 6px; border-radius: 999px; background: var(--bg3); overflow: hidden; }
+.tl-fill { height: 100%; border-radius: 999px; opacity: 0.75; }
+.tl-desc { font-size: 11px; color: var(--ink3); margin-top: 4px; font-weight: 300; }
+
+/* tips */
+.tip-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink2); line-height: 1.7; font-weight: 300; }
+.tip-item:last-child { border-bottom: none; padding-bottom: 0; }
+.tip-pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+
+/* gene tags */
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.g-tag { font-size: 11px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border2); background: var(--bg3); color: var(--ink2); font-weight: 300; }
+.g-tag.active { border-color: var(--sage); color: var(--sage); background: var(--sage-lt); }
+.g-tag.reduced { border-color: var(--rose); color: var(--rose); background: var(--rose-lt); }
+
+/* footer */
+.footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+.footer-inner { display: flex; flex-direction: column; gap: 10px; }
+.footer-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 300; font-style: italic;
+  color: var(--ink);
+}
+.footer-links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.footer-sep { color: var(--ink4); font-size: 12px; }
+.footer a { font-size: 12px; color: var(--ink3); text-decoration: none; font-weight: 300; border-bottom: 1px solid var(--border2); padding-bottom: 1px; transition: color 0.2s, border-color 0.2s; }
+.footer a:hover { color: var(--sage); border-color: var(--sage); }
+.footer-note { font-size: 11px; color: var(--ink4); font-weight: 300; margin-top: 6px; line-height: 1.7; }
+
+@media (max-width: 480px) {
+  .check-grid { grid-template-columns: 1fr; }
+  .score-grid { grid-template-columns: 1fr 1fr; }
+  .score-grid .score-card:last-child { grid-column: span 2; }
+  .form-row { flex-direction: column; align-items: flex-start; }
+  .form-row label { min-width: unset; }
+  .form-row input, .form-row select { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-meta">Skin science · Personal project</div>
+    <h1>Circadian<br><em>Skin Clock</em></h1>
+    <p class="hero-sub">Your skin follows a 24-hour biological clock. Enter your sleep habits to reveal your personal renewal windows, optimal ingredient timing, and active clock genes.</p>
+    <div class="deco-ring">
+      <div class="ring-hand" id="ring-hand"></div>
+      <div class="ring-dot"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-label">Sleep & lifestyle inputs</div>
+    <div class="form-row"><label>Usual sleep time</label><input type="time" id="sleep" value="23:30"></div>
+    <div class="form-row"><label>Usual wake time</label><input type="time" id="wake" value="07:00"></div>
+    <div class="form-row">
+      <label>Chronotype</label>
+      <select id="chronotype">
+        <option value="early">Early bird (morning person)</option>
+        <option value="neutral" selected>Neutral</option>
+        <option value="late">Night owl (evening person)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Screens before bed</label>
+      <select id="screen">
+        <option value="none">None / minimal</option>
+        <option value="some" selected>30–60 min</option>
+        <option value="heavy">1+ hours</option>
+      </select>
+    </div>
+    <div style="margin-bottom: 14px;">
+      <div class="check-lbl">Disruption factors — check all that apply</div>
+      <div class="check-grid">
+        <label class="check-item"><input type="checkbox" id="shift"><span class="cbox"></span>Shift / irregular work</label>
+        <label class="check-item"><input type="checkbox" id="jet"><span class="cbox"></span>Frequent travel / jet lag</label>
+        <label class="check-item"><input type="checkbox" id="stress"><span class="cbox"></span>High stress level</label>
+        <label class="check-item"><input type="checkbox" id="caffeine"><span class="cbox"></span>Caffeine after 3 pm</label>
+        <label class="check-item"><input type="checkbox" id="light"><span class="cbox"></span>Low daylight exposure</label>
+        <label class="check-item"><input type="checkbox" id="social"><span class="cbox"></span>Social jet lag (weekends)</label>
+      </div>
+    </div>
+    <button class="btn" id="calc">Calculate my circadian skin profile</button>
+  </div>
+
+  <div class="results" id="results">
+    <div class="divider">your profile</div>
+    <div class="score-grid" id="score-grid"></div>
+
+    <div class="card">
+      <div class="sec-label">Circadian skin events tonight</div>
+      <div id="timeline"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label">Personalised recommendations</div>
+      <div id="tips"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label">Clock genes in your sleep window</div>
+      <p id="gene-desc" style="font-size:13px;color:var(--ink2);line-height:1.8;margin-bottom:10px;font-weight:300;"></p>
+      <div class="tag-row" id="gene-tags"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-inner">
+      <div class="footer-name">Altannavch</div>
+      <div class="footer-links">
+        <a href="https://www.lab.kajiwaraoriharalab.com" target="_blank">Kajiwara Orihara Lab</a>
+        <span class="footer-sep">·</span>
+        <a href="mailto:altannavch0206@gmail.com">altannavch0206@gmail.com</a>
+      </div>
+      <div class="footer-note">
+        Built on BMAL1/CLOCK research and TTFL circadian biology.<br>
+        For educational use — not a clinical diagnostic tool.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function tickClock() {
+    const now = new Date();
+    const deg = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
+    document.getElementById('ring-hand').style.transform = `translateX(-50%) rotate(${deg}deg)`;
+  }
+  tickClock();
+  setInterval(tickClock, 10000);
+
+  document.querySelectorAll('.check-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const cb = item.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      item.classList.toggle('checked', cb.checked);
+    });
+  });
+
+  function toMins(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+  function addMins(base, add) {
+    const t = ((base+add)%1440+1440)%1440;
+    const h = Math.floor(t/60), m = t%60;
+    return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+  }
+  function fmt(t) {
+    const [h,m] = t.split(':').map(Number);
+    const ap = h<12?'am':'pm', hh = h%12===0?12:h%12;
+    return hh+':'+(m<10?'0':'')+m+'\u202f'+ap;
+  }
+  function sc(v) { return v>=70?'good':v>=45?'mid':'low'; }
+
+  document.getElementById('calc').addEventListener('click', function() {
+    const sleepStr = document.getElementById('sleep').value;
+    const wakeStr  = document.getElementById('wake').value;
+    const chrono   = document.getElementById('chronotype').value;
+    const screen   = document.getElementById('screen').value;
+    const shift    = document.getElementById('shift').checked;
+    const jet      = document.getElementById('jet').checked;
+    const stress   = document.getElementById('stress').checked;
+    const caffeine = document.getElementById('caffeine').checked;
+    const light    = document.getElementById('light').checked;
+    const social   = document.getElementById('social').checked;
+
+    let sm = toMins(sleepStr), wm = toMins(wakeStr);
+    if (wm <= sm) wm += 1440;
+    const dur = (wm - sm) / 60;
+
+    let pen = 0;
+    if (screen==='some') pen+=8; if (screen==='heavy') pen+=18;
+    if (shift) pen+=15; if (jet) pen+=10; if (stress) pen+=8;
+    if (caffeine) pen+=7; if (light) pen+=7; if (social) pen+=10;
+    if (dur<6) pen+=20; else if (dur<7) pen+=10; else if (dur>9) pen+=5;
+    const off = chrono==='early'?-30:chrono==='late'?45:0;
+
+    const quality  = Math.max(20, Math.min(100, Math.round(100-pen)));
+    const renewal  = Math.max(15, Math.min(100, Math.round(quality*0.9+(dur>=7&&dur<=9?5:-5))));
+    const durClass = sc(dur>=7?80:dur>=6?50:25);
+
+    document.getElementById('score-grid').innerHTML = `
+      <div class="score-card"><div class="score-lbl">Sleep duration</div><div class="score-num ${durClass}">${dur.toFixed(1)}</div><div class="score-unit">hrs / night</div></div>
+      <div class="score-card"><div class="score-lbl">Rhythm quality</div><div class="score-num ${sc(quality)}">${quality}</div><div class="score-unit">/ 100</div></div>
+      <div class="score-card"><div class="score-lbl">Skin renewal</div><div class="score-num ${sc(renewal)}">${renewal}</div><div class="score-unit">/ 100</div></div>`;
+
+    const events = [
+      { name:'Melatonin onset',        offset:-120, dur:30,  color:'#9b8fbf', desc:'Prepares skin for repair mode — apply occlusive layer now', wr:false },
+      { name:'Core body temp drop',    offset:-60,  dur:45,  color:'#6a9abf', desc:'Vasodilation improves penetration of topical actives', wr:false },
+      { name:'Peak keratinocyte mitosis', offset:60, dur:120, color:'#4a6355', desc:'BMAL1-driven cell renewal — optimal window for repair actives', wr:false },
+      { name:'Cortisol pre-rise',      offset:-90,  dur:60,  color:'#c4974a', desc:'Signals wake-up; disruption elevates inflammatory markers', wr:true },
+      { name:'TEWL at lowest',         offset:30,   dur:90,  color:'#b06080', desc:'Barrier at peak integrity — ideal for barrier-repair treatments', wr:false },
+    ];
+
+    document.getElementById('timeline').innerHTML = events.map(ev => {
+      const base = ev.wr ? toMins(wakeStr) : sm;
+      const s = ((base + ev.offset + Math.round(off/2)) % 1440 + 1440) % 1440;
+      const e = (s + ev.dur) % 1440;
+      const pct = Math.min(95, Math.round((ev.dur/(dur*60))*100));
+      return `<div class="tl-row">
+        <div class="tl-head"><span class="tl-name">${ev.name}</span><span class="tl-time">${fmt(addMins(0,s))} – ${fmt(addMins(0,e))}</span></div>
+        <div class="tl-bar"><div class="tl-fill" style="width:${pct}%;background:${ev.color};"></div></div>
+        <div class="tl-desc">${ev.desc}</div>
+      </div>`;
+    }).join('');
+
+    const tips = [
+      { c:'#4a6355', t:`Apply your most potent actives — retinoids, peptides, ceramides — right at ${fmt(sleepStr)}. Peak keratinocyte mitosis begins ~1 hr into sleep when BMAL1/CLOCK expression is highest.` }
+    ];
+    if (screen!=='none') tips.push({ c:'#9b8fbf', t:'Blue light suppresses melatonin and delays BMAL1 activation. Try warm display mode or no screens 45 min before bed — your renewal window will shift earlier.' });
+    if (dur<7) tips.push({ c:'#b06060', t:`${dur.toFixed(1)} hrs is below the 7–9 hr window where barrier gene expression (FLG, LOR) peaks. Even 30 extra minutes meaningfully improves ceramide synthesis.` });
+    if (stress) tips.push({ c:'#c4974a', t:'Elevated cortisol degrades collagen synthesis and activates the CLOCK–TSLP inflammatory axis. Niacinamide and panthenol can partially compensate at the barrier level.' });
+    if (caffeine) tips.push({ c:'#b07050', t:'Caffeine after 3 pm delays circadian phase by 40–60 min — your cell renewal window may be running later than estimated.' });
+    if (social) tips.push({ c:'#6a9abf', t:'Social jet lag resets your clock weekly, equivalent to a 1–2 time zone shift. Keeping wake time within ±30 min on weekends stabilises your rhythm significantly.' });
+    if (light) tips.push({ c:'#4a7a55', t:'Morning daylight (10–30 min before 10 am) is the strongest zeitgeber for anchoring your CLOCK genes — it sets the phase of your entire 24-hr skin cycle.' });
+
+    document.getElementById('tips').innerHTML = tips.map(t =>
+      `<div class="tip-item"><span class="tip-pip" style="background:${t.c};"></span><span>${t.t}</span></div>`
+    ).join('');
+
+    let gdesc, genes;
+    if (dur>=7) {
+      gdesc = `With ${dur.toFixed(1)} hrs of sleep, your circadian window supports full activation of the TTFL (transcription-translation feedback loop). BMAL1/CLOCK heterodimers peak in early sleep, driving transcription of barrier repair and ceramide synthesis genes.`;
+      genes = [
+        {l:'BMAL1',s:'active'},{l:'CLOCK',s:'active'},{l:'PER1/2',s:'active'},{l:'CRY1/2',s:'active'},
+        {l:'FLG',s:'active'},{l:'LOR',s:'active'},{l:'CERS3',s:'active'},{l:'NRF2',s:'active'},
+      ];
+    } else {
+      gdesc = `Shortened sleep compresses the TTFL cycle. PER/CRY repressor proteins may not fully clear before wake, blunting next-cycle BMAL1 activation and downstream barrier gene expression.`;
+      genes = [
+        {l:'BMAL1',s:'reduced'},{l:'PER2 (lingering)',s:'reduced'},{l:'FLG',s:'reduced'},
+        {l:'CERS3',s:'reduced'},{l:'CRY1/2',s:''},{l:'NRF2',s:''},
+      ];
+    }
+    if (stress) { genes.push({l:'TSLP',s:'reduced'}); genes.push({l:'IL-6',s:'reduced'}); }
+    if (screen!=='none') genes.push({l:'MT1A',s:'reduced'});
+
+    document.getElementById('gene-desc').textContent = gdesc;
+    document.getElementById('gene-tags').innerHTML = genes.map(g =>
+      `<span class="g-tag ${g.s}">${g.l}</span>`
+    ).join('');
+
+    const res = document.getElementById('results');
+    res.classList.add('visible');
+    setTimeout(() => res.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+  });
+</script>
+</body>
+</html>
